@@ -87,6 +87,15 @@ socket.io 4, Node 22, `node:test` via tsx (`npm test`). Commit when it makes sen
 and publish when the user or the box session asks. Never put tokens, client ids or account
 names in the repo.
 
+## Box status (2026-11-13)
+- 0.1.0 installed on the dev box (box 0.15.2): healthy at /music/, no source chosen yet,
+  nothing played on real speakers or TVs.
+- The box forwards an app's room-less events to integrations (Home Assistant) like a
+  game's; `bargames validate`'s level-2 warning for apps is wrong and goes away in SDK 0.13.1.
+- SDK 0.13.1 will add `endReason` ("finished" | "stopped" | "replaced" | "disconnected" |
+  "error") on ended audio sessions. When it lands: vendor it and use `endReason` in
+  `outputs/box.ts` instead of treating every `ended` alike.
+
 ## Not yet verified against the real thing
 - Real Spotify (the user's account and developer app): the wizard, PKCE sign-in, devices,
   and the handover timing on a real player. Only tested against a fake Spotify.
