@@ -1,0 +1,49 @@
+{
+  "id": "music",
+  "name": "Music Requests",
+  "kind": "app",
+  "version": "0.1.0",
+  "image": "ghcr.io/thezigpc/venuebox-music:0.1.0",
+  "port": 3009,
+  "sdk": {
+    "version": "0.13.0",
+    "level": 2
+  },
+  "routes": {
+    "player": "/",
+    "table": "/tv",
+    "host": "/host",
+    "admin": "/admin"
+  },
+  "routing": {
+    "basePath": true
+  },
+  "health": "/health",
+  "events": [
+    "x-music-requested",
+    "x-music-approved",
+    "x-music-rejected",
+    "x-music-now-playing",
+    "x-music-skipped",
+    "x-music-requests-open",
+    "x-music-requests-closed"
+  ],
+  "commands": [],
+  "brandable": [
+    "displayName",
+    "accent"
+  ],
+  "audio": {
+    "play": true
+  },
+  "resources": {
+    "memory": "384m",
+    "cpus": 1
+  },
+  "network": {
+    "internet": true
+  },
+  "env": {
+    "DATA_DIR": "/data"
+  }
+}

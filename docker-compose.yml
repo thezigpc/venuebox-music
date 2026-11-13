@@ -1,0 +1,38 @@
+# Standalone deployment on a Linux Docker host: docker compose up -d --build
+#
+# Publishes to 127.0.0.1 only; put a Cloudflare tunnel (or another reverse proxy) in front.
+# Spotify's sign-in needs an https address (the tunnel) or http://127.0.0.1. Check
+# `docker ps` for a free host port first.
+services:
+  app:
+    build: .
+    container_name: music-app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${HOST_PORT:-3009}:3009"
+    environment:
+      PORT: "3009"
+      DATA_DIR: /data
+      GAME_NAME: "${GAME_NAME:-}"
+      # Leave unset to use the first-run setup screen at /admin.
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      # The public address (https://music.example.com), for the TV's QR code.
+      PUBLIC_URL: "${PUBLIC_URL:-}"
+      # Under a path behind a reverse proxy (e.g. /music); empty at the root.
+      BASE_PATH: "${BASE_PATH:-}"
+      MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-60}"
+      TZ: "${TZ:-America/New_York}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    volumes:
+      # Settings, the Spotify sign-in and the uploaded music survive rebuilds.
+      # The image runs as uid 1000: `sudo chown -R 1000:1000 ./data` if root created it.
+      - ./data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3009/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
