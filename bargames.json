@@ -2,11 +2,11 @@
   "id": "music",
   "name": "Music Requests",
   "kind": "app",
-  "version": "0.1.1",
-  "image": "ghcr.io/thezigpc/venuebox-music:0.1.1",
+  "version": "0.1.2",
+  "image": "ghcr.io/thezigpc/venuebox-music:0.1.2",
   "port": 3009,
   "sdk": {
-    "version": "0.13.1",
+    "version": "0.13.2",
     "level": 2
   },
   "routes": {

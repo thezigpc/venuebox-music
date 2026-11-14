@@ -1,6 +1,6 @@
 # Bar Games integration: Music Requests (app)
 
-**Level 2, `kind: "app"`, SDK 0.13.1, game kit 0.7.3.** No rooms or commands; `x-music-*`
+**Level 2, `kind: "app"`, SDK 0.13.2, game kit 0.7.4.** No rooms or commands; `x-music-*`
 events; plays files on the box's speakers (`audio.play`).
 
 ## Manifest
@@ -22,9 +22,9 @@ digest. The events carry no room; the mock box accepts and prints them (see belo
 | `x-music-skipped` | `title`, `artist` |
 | `x-music-requests-open` / `x-music-requests-closed` | none |
 
-## `npx bargames check` (SDK 0.13.1 mock box, `--base /music`)
+## `npx bargames check` (SDK 0.13.2 mock box, `--base /music`)
 ```
-music@0.1.1 · level 2 · http://127.0.0.1:3009
+music@0.1.2 · level 2 · http://127.0.0.1:3009
 ✓ health /health → 200
 ✓ /__bargames/venue.json returns the box's branding ("Music Requests (mock)")
 ✓ /__bargames/theme.css served
@@ -43,13 +43,16 @@ staff pages list the mock's outputs (jack, Bluetooth, AirPlay TV) by the venue's
 Staff sign-in through the gateway (`/__bargames/staff?next=/host`) opens /host and /admin
 without a password.
 
-## endReason through the mock box (SDK 0.13.1, 2026-11-14)
-`server/test/tools/mock-box-endreason.ts` (mock box on `--port 7381 --core-port 7399`):
-three 4 s songs. Song 1 ended `finished` and song 2 followed; song 2 stopped through the
-box's API (`stopped`): nothing started, song 3 waited in the queue and staff saw "The music
-was stopped on The box's default speaker (Stopped). The queue is waiting until you carry
-on."; "Carry on" started song 3. `replaced`, `disconnected` and `error` are covered by unit
-tests (`server/test/files.test.ts`).
+## endReason through the mock box (SDK 0.13.2, 2026-11-14)
+`server/test/tools/mock-box-endreason.ts` (mock box on `--port 7381 --core-port 7399`), six
+songs; the mock's `POST /__bargames/dev/audio/end?reason=…` ends the playing one:
+- `finished` (song 1 played to its end): song 2 followed.
+- `stopped`, `replaced`, `disconnected`: nothing started, the next song waited first in the
+  queue, staff saw why ("The speaker went away (The speaker disconnected). The queue is
+  paused until you carry on."); "Carry on" (or "Take the speaker over" for `replaced`)
+  started it.
+- `error`: the queue moved on at once, with a note for staff.
+All passed ("ALL OK"). The unit tests in `server/test/files.test.ts` cover the same.
 
 With `--public-url https://requests.the-longest-bar-name-in-town.example.net/music` the TV
 prints the address under the QR (kit `JoinAddress`), wrapped at "." and "/" inside the QR

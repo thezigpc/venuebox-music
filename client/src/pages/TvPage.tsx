@@ -107,7 +107,7 @@ export function TvPage() {
               {qr && <div className="tv-qr-code" dangerouslySetInnerHTML={{ __html: qr }} />}
               <div className="tv-qr-text">
                 <p>Scan to request</p>
-                <JoinAddress url={guestUrl} label="or go to" className="tv-join" style={{ alignItems: "flex-start", textAlign: "left" }} />
+                <JoinAddress url={guestUrl} label="or go to" className="tv-join" align="start" />
               </div>
             </div>
           ) : (

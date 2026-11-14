@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 (2026-11-14)
+
+- SDK 0.13.2 and GameKit 0.7.4 (`AudioEndReason` from the SDK; `JoinAddress align="start"`).
+- Every way a box song can end (finished, stopped, replaced, disconnected, error) is now
+  checked against the mock box too, not only with unit fakes. Box 0.16.0's "stop all sound"
+  scene ends a song as "stopped", so the queue waits until staff carry on.
+
 ## 0.1.1 (2026-11-14)
 
 - SDK 0.13.1 and GameKit 0.7.3.

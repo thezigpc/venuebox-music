@@ -19,13 +19,13 @@ the QR code. Runs standalone too. Repo: https://github.com/thezigpc/venuebox-mus
   and pastes its client id; PKCE, no secret. The setup screen shows the personal-use notice
   and stores when it was confirmed (`spotify.consentAt`). Never call the app "licensed" or
   "approved". README has the Licensing section.
-- **Speakers belong to the box.** Files play through `bg.audio` (SDK 0.13.1, box 0.15.0+)
+- **Speakers belong to the box.** Files play through `bg.audio` (SDK 0.13.2, box 0.15.0+)
   or the speaker page. Never pair Bluetooth, open sound devices, ask for host access, or use
   librespot or any unofficial Spotify player.
 - **Don't play sound on the user's real TVs or speakers without asking them** (the box
   session's request; AirPlay/Bluetooth playback isn't proven on the real box yet).
 
-## How a box song ends (0.1.1, SDK 0.13.1 `endReason`, box 0.15.4+)
+## How a box song ends (0.1.1+, SDK `AudioEndReason`, box 0.15.4+; box 0.16.0 "stop all sound" = `stopped`)
 `BoxOutput` passes `endReason` on its events; `FilesSource.onOutput` decides:
 - `finished`: the next song starts. `error`: move on, and staff see a note for 2 min
   (`files.notice()`, host state `notice`).
@@ -84,19 +84,21 @@ Our own skip/stop forgets the session first, so it never looks like a hold.
   address.
 
 ## Platform
-- `bargames.json`: id `music`, port 3009, `kind: app`, SDK 0.13.1 level 2 (events, no
+- `bargames.json`: id `music`, port 3009, `kind: app`, SDK 0.13.2 level 2 (events, no
   commands), routes player `/`, table `/tv`, host `/host`, admin `/admin`, `basePath`,
   `audio.play`, `network.internet`, 384m.
-- Vendored: `vendor/bargames-sdk-0.13.1.tgz` (GameBroker/integration),
-  `vendor/bargames-gamekit-0.7.3.tgz` (GameKit/dist-pack, or the kit's GitHub release).
+- Vendored: `vendor/bargames-sdk-0.13.2.tgz` (GameBroker/integration),
+  `vendor/bargames-gamekit-0.7.4.tgz` (GameKit/dist-pack, or the kit's GitHub release).
   When changing them: update both package.json files and run `npm install` (lockfile).
-- The TV prints the guest address under the QR with kit `JoinAddress` (left-aligned, width
+- The TV prints the guest address under the QR with kit `JoinAddress align="start"` (width
   set by `.tv-qr`). Check long ones with `mock-box --public-url https://<long>/music`.
-- **Mock box on this PC:** other sessions run mock boxes too (7080/7199 is often taken) and
+- **Mock box on this PC:** other sessions run mock boxes too (7080/7199 is often taken; SDK
+  0.13.2 says so clearly) and
   something kills `node server/dist/index.js` started by a relative path. Use
   `--port 7381 --core-port 7399` (and `MSYS_NO_PATHCONV=1` in Git Bash for `--base`), set
   `BG_BASE_PATH=/music`, and start the app with the absolute path.
-  `server/test/tools/mock-box-endreason.ts` drives finished → stopped → carry on.
+  `server/test/tools/mock-box-endreason.ts` drives all five end reasons (mock control
+  `POST /__bargames/dev/audio/end?reason=…`).
 - Don't edit `C:\CodeProjects\GameBroker` or other modules; platform needs go to the
   GameBroker session (ListAgents, name starts with "GameBroker") as "SDK requests".
 
@@ -111,16 +113,13 @@ names in the repo.
   nothing played on real speakers or TVs.
 - The box forwards an app's room-less events to integrations (Home Assistant) like a
   game's. SDK 0.13.1's `validate` no longer warns about it.
-- 0.1.1 (SDK 0.13.1, kit 0.7.3, `endReason`) published and installed on the dev box
-  2026-11-14. The box is still 0.15.3 (no `endReason` yet; the state fallback runs) until
-  the user approves 0.15.4. Queued for the next SDK/kit patch: `AudioEndReason` exported
-  from `/server`, mock-box controls to end a session as replaced/disconnected/error, the
-  `mock-box --help` bug, a `JoinAddress` align prop (then drop our style override).
+- 0.1.2 (SDK 0.13.2, kit 0.7.4) published 2026-11-14; the box session installs it. The box
+  is on 0.16.0, which reports `endReason` for real.
 
 ## Not yet verified against the real thing
 - Real Spotify (the user's account and developer app): the wizard, PKCE sign-in, devices,
   and the handover timing on a real player. Only tested against a fake Spotify.
-- The real box's audio and its `endReason` (box 0.15.4): tested with unit fakes and
-  `bargames mock-box` (finished, stopped).
+- The real box's audio and its `endReason` (box 0.16.0): tested with unit fakes and
+  `bargames mock-box` (all five reasons).
 - The speaker page in a real browser playing real audio (the socket protocol is tested).
 - The Docker image (no Docker on the dev PC; the GitHub Actions publish builds it).

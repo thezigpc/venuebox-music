@@ -2,6 +2,7 @@
 //   - the box's audio outputs (jack, HDMI, Bluetooth, AirPlay TVs), through the SDK (0.13.0+);
 //   - the speaker page (/speaker), a browser on a PC or tablet wired to the sound system.
 
+import type { AudioEndReason } from "@bargames/sdk/server";
 import type { LibraryTrack } from "@music/shared";
 
 /**
@@ -10,7 +11,7 @@ import type { LibraryTrack } from "@music/shared";
  *   restarted; replaced: something else started on that output; disconnected: the speaker
  *   or TV went away; error: it couldn't play.
  */
-export type EndReason = "finished" | "stopped" | "replaced" | "disconnected" | "error";
+export type EndReason = AudioEndReason;
 
 export type OutputEvent =
   | { type: "ended"; trackId: string; message?: string; reason?: EndReason }
