@@ -181,6 +181,20 @@ export class Player {
       this.endBackground(src);
     }
 
+    // The source is holding the queue (speaker stopped, taken or gone): hand nothing over;
+    // songs already handed go back to the queue. Staff carry on with resume().
+    const hold = src.hold?.();
+    if (hold) {
+      for (const h of q.handed()) {
+        q.unhand(h.id);
+        this.dueBy.delete(h.id);
+      }
+      this.failed = true;
+      this.problem = hold.message;
+      this.problemKind = hold.reason === "replaced" ? "busy" : "held";
+      return;
+    }
+
     // 3. A handed song that never started: give up on it so the queue keeps moving.
     for (const h of q.handed()) {
       const due = this.dueBy.get(h.id) ?? (h.handedAt ?? this.now()) + START_GRACE_MS + 10 * 60_000;
@@ -288,6 +302,12 @@ export class Player {
 
   async resume(): Promise<void> {
     const src = this.need();
+    if (src.hold?.()) {
+      // Carry on after a hold: the next song starts.
+      src.release?.();
+      this.pausedByStaff = false;
+      return this.tick();
+    }
     if (!src.resume) throw new SourceError("other", `${src.label} can't resume from here.`);
     await src.resume();
     this.pausedByStaff = false;

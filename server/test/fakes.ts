@@ -79,7 +79,7 @@ export class FakeSource implements MusicSource {
 /** A fake box audio API: three outputs; sessions end when the test says so. */
 export class FakeAudio {
   onBox = true;
-  sessions: { id: string; output: string; owner: string; state: "starting" | "playing" | "paused" | "ended" | "error"; positionMs: number; title?: string; startedAt: string; message?: string; path: string }[] = [];
+  sessions: { id: string; output: string; owner: string; state: "starting" | "playing" | "paused" | "ended" | "error"; positionMs: number; title?: string; startedAt: string; message?: string; path: string; endReason?: "finished" | "stopped" | "replaced" | "disconnected" | "error" }[] = [];
   watchers: ((s: unknown[]) => void)[] = [];
   busy = new Set<string>();
   fetched: { path: string; status: number }[] = [];
@@ -134,7 +134,15 @@ export class FakeAudio {
   notify() {
     for (const w of this.watchers) w(this.sessions.map((s) => ({ ...s })));
   }
-  /** The song on `id` reached its end (or failed, with a message). */
+  /** Box 0.15.4+: the session on `id` ended with a reason (and the box's message). */
+  endWith(id: string, endReason: "finished" | "stopped" | "replaced" | "disconnected" | "error", message?: string) {
+    const s = this.sessions.find((x) => x.id === id)!;
+    s.state = endReason === "error" ? "error" : "ended";
+    s.endReason = endReason;
+    if (message) s.message = message;
+    this.notify();
+  }
+  /** Older boxes: the song on `id` reached its end (or failed, with a message); no reason. */
   finish(id: string, message?: string) {
     const s = this.sessions.find((x) => x.id === id)!;
     s.state = "ended";

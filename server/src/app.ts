@@ -422,6 +422,9 @@ export async function createApp(o: AppOptions): Promise<MusicApp> {
         output: store.settings.output,
         speakerConnected: speaker.connected,
         busyOutput: player.problemKind === "busy" ? player.problem : null,
+        // The queue waits after the speaker was stopped, taken or went away (box 0.15.4+).
+        held: src?.hold?.()?.reason ?? null,
+        notice: store.settings.source === "files" ? files.notice() : "",
       };
       res.json(body);
     }),
@@ -547,6 +550,7 @@ export async function createApp(o: AppOptions): Promise<MusicApp> {
       else if (a === "pause") await player.pause();
       else if (a === "resume") await player.resume();
       else if (a === "takeover") {
+        files.release();
         files.replaceOnce = true;
         player.poke();
       } else if (a === "volume") {

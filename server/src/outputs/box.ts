@@ -1,4 +1,4 @@
-// The box's audio outputs (box 0.15.0, SDK 0.13.0). The box fetches the file from our own
+// The box's audio outputs (box 0.15.0, SDK 0.13.1; endReason from box 0.15.4). The box fetches the file from our own
 // server (/box-audio/<file>, for the box only) and plays it on the output the venue set up.
 // We never pair Bluetooth or touch sound hardware ourselves.
 
@@ -6,7 +6,7 @@ import { log } from "@bargames/gamekit/server";
 import type { Audio } from "@bargames/sdk/server";
 import type { LibraryTrack, OutputChoice } from "@music/shared";
 import { SourceError } from "../sources/types.js";
-import type { Output, OutputEvent, OutputPosition } from "./types.js";
+import type { EndReason, Output, OutputEvent, OutputPosition } from "./types.js";
 
 /** The box's outputs as choices for the staff page (the venue's names). */
 export async function boxOutputs(audio: Audio): Promise<OutputChoice[]> {
@@ -66,8 +66,15 @@ export class BoxOutput implements Output {
         const s = this.session;
         if (!s) return;
         const mine = sessions.find((x) => x.id === s.id);
-        if (!mine) return;
-        if (mine.state === "ended") {
+        if (!mine || (mine.state !== "ended" && mine.state !== "error")) return;
+        const reason: EndReason | undefined = mine.endReason;
+        if (reason) {
+          // Box 0.15.4+: why it ended. The files source decides whether the queue moves on.
+          this.session = null;
+          if (reason === "error") this.emit({ type: "error", trackId: s.trackId, reason, message: mine.message || "The box couldn't play that song." });
+          else this.emit({ type: "ended", trackId: s.trackId, reason, ...(mine.message ? { message: mine.message } : {}) });
+        } else if (mine.state === "ended") {
+          // Older boxes: state only.
           this.session = null;
           this.emit({ type: "ended", trackId: s.trackId, ...(mine.message ? { message: mine.message } : {}) });
         } else if (mine.state === "error") {

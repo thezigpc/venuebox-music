@@ -222,6 +222,10 @@ export interface HostState {
   speakerConnected: boolean;
   /** An output another app is using; staff may take it over. */
   busyOutput: string | null;
+  /** The queue is waiting after the speaker was stopped, taken over or went away. */
+  held: "stopped" | "replaced" | "disconnected" | null;
+  /** A song failed and the queue moved on (shown for a couple of minutes). */
+  notice: string;
 }
 
 export interface AdminState {

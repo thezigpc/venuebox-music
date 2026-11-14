@@ -1,6 +1,6 @@
 # Bar Games integration: Music Requests (app)
 
-**Level 2, `kind: "app"`, SDK 0.13.0, game kit 0.7.2.** No rooms or commands; `x-music-*`
+**Level 2, `kind: "app"`, SDK 0.13.1, game kit 0.7.3.** No rooms or commands; `x-music-*`
 events; plays files on the box's speakers (`audio.play`).
 
 ## Manifest
@@ -9,9 +9,8 @@ playing, up next, QR), host `/host` (staff queue), admin `/admin` (setup),
 `routing.basePath`, `audio: { play: true }`, `network.internet: true` (Spotify's Web API),
 brandable `displayName` and `accent`, 384m.
 
-`npx bargames validate .` passes with two expected warnings: the image isn't pinned by
-digest, and "apps have no rooms; level 2+ room events and commands won't be used". The
-events carry no room; the mock box accepts and prints them (see below).
+`npx bargames validate .` passes with one expected warning: the image isn't pinned by
+digest. The events carry no room; the mock box accepts and prints them (see below).
 
 ## Events
 | Event | Data |
@@ -23,9 +22,9 @@ events carry no room; the mock box accepts and prints them (see below).
 | `x-music-skipped` | `title`, `artist` |
 | `x-music-requests-open` / `x-music-requests-closed` | none |
 
-## `npx bargames check` (SDK 0.13.0 mock box, `--base /music`)
+## `npx bargames check` (SDK 0.13.1 mock box, `--base /music`)
 ```
-music@0.1.0 · level 2 · http://127.0.0.1:3009
+music@0.1.1 · level 2 · http://127.0.0.1:3009
 ✓ health /health → 200
 ✓ /__bargames/venue.json returns the box's branding ("Music Requests (mock)")
 ✓ /__bargames/theme.css served
@@ -44,6 +43,18 @@ staff pages list the mock's outputs (jack, Bluetooth, AirPlay TV) by the venue's
 Staff sign-in through the gateway (`/__bargames/staff?next=/host`) opens /host and /admin
 without a password.
 
+## endReason through the mock box (SDK 0.13.1, 2026-11-14)
+`server/test/tools/mock-box-endreason.ts` (mock box on `--port 7381 --core-port 7399`):
+three 4 s songs. Song 1 ended `finished` and song 2 followed; song 2 stopped through the
+box's API (`stopped`): nothing started, song 3 waited in the queue and staff saw "The music
+was stopped on The box's default speaker (Stopped). The queue is waiting until you carry
+on."; "Carry on" started song 3. `replaced`, `disconnected` and `error` are covered by unit
+tests (`server/test/files.test.ts`).
+
+With `--public-url https://requests.the-longest-bar-name-in-town.example.net/music` the TV
+prints the address under the QR (kit `JoinAddress`), wrapped at "." and "/" inside the QR
+box at 1920x1080 and 1280x720.
+
 ## Server
 - `createBarGames({ gameId: "music" })`, middleware before `/api` and the SPA; status
   `{ rooms: [] }`.
@@ -54,9 +65,9 @@ without a password.
   /speaker. The speaker socket accepts an admin session token or `bg.isStaff`.
 - Audio: `/box-audio/*` only for `bg.fromBox(req)` (`express.static`, so Range works);
   `bg.audio.play({ path, output?, title, artist, album, durationMs, replace? })`; `watch`
-  for ended/error; staff pick the output (default: the venue's); `replace: true` only when
+  for ended/error and its `endReason` (see CLAUDE.md "How a box song ends"); staff pick the output (default: the venue's); `replace: true` only when
   staff press "Take the speaker over"; volume only while playing there.
-- QR code: `bg.publicUrl("/")` on a box; `PUBLIC_URL` standalone; else the TV page uses
+- QR code and the address under it: `bg.publicUrl("/")` on a box; `PUBLIC_URL` standalone; else the TV page uses
   its own address.
 
 ## Path routing

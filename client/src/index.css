@@ -685,6 +685,9 @@ fieldset {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.tv-artist.tv-wrap {
+  white-space: normal;
+}
 .tv-for {
   font-size: 3.4vh;
   color: var(--accent);
@@ -778,6 +781,26 @@ fieldset {
   font-size: 4vh;
   font-weight: 800;
   line-height: 1.1;
+}
+/* Kit 0.7.3's JoinAddress breaks after "." and "/" and shrinks long addresses; the box
+   keeps its width (min-width: 0 lets the text wrap instead of widening the column). */
+.tv-qr-text {
+  min-width: 0;
+  flex: 1;
+}
+.tv-join {
+  display: block;
+  margin-top: 1.2vh;
+  font-size: 3.2vh;
+  line-height: 1.2;
+  color: var(--muted);
+}
+.tv-join .bargames-join-label {
+  display: block;
+}
+.tv-join .bargames-join-address {
+  color: var(--text);
+  font-weight: 700;
 }
 .tv-closed {
   white-space: normal;

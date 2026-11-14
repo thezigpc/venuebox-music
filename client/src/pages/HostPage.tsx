@@ -87,13 +87,21 @@ function Host({ signOut, recheck }: { signOut: () => void; recheck: () => void }
       {s.problem && (
         <div className="card is-error">
           <p>{s.problem}</p>
-          {s.busyOutput && (
-            <button className="primary" onClick={() => void act(() => api.player("takeover"), "Taking the speaker over…")}>
-              Take the speaker over
-            </button>
-          )}
+          <div className="btn-row">
+            {s.held && (
+              <button className={s.busyOutput ? "" : "primary"} onClick={() => void act(() => api.player("resume"), "Carrying on…")}>
+                Carry on with the queue
+              </button>
+            )}
+            {s.busyOutput && (
+              <button className="primary" onClick={() => void act(() => api.player("takeover"), "Taking the speaker over…")}>
+                Take the speaker over
+              </button>
+            )}
+          </div>
         </div>
       )}
+      {s.notice && <p className="card warn">{s.notice}</p>}
 
       <main className="host-grid">
         <section className="card">

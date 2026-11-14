@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
-import { basePath } from "@bargames/gamekit/client";
+import { basePath, JoinAddress } from "@bargames/gamekit/client";
 import { activeAnnouncement, tableMode } from "@bargames/sdk/client";
 import type { PublicState } from "@music/shared";
 import { api } from "../api";
@@ -81,7 +81,7 @@ export function TvPage() {
               <>
                 <p className="tv-eyebrow">{pub?.name ?? ""}</p>
                 <h1 className="tv-title">Pick the next song</h1>
-                <p className="tv-artist">Scan the code to request one.</p>
+                <p className="tv-artist tv-wrap">Scan the code to request one.</p>
               </>
             )}
           </div>
@@ -105,7 +105,10 @@ export function TvPage() {
           {pub?.requestsOpen ? (
             <div className="tv-qr">
               {qr && <div className="tv-qr-code" dangerouslySetInnerHTML={{ __html: qr }} />}
-              <p>Scan to request</p>
+              <div className="tv-qr-text">
+                <p>Scan to request</p>
+                <JoinAddress url={guestUrl} label="or go to" className="tv-join" style={{ alignItems: "flex-start", textAlign: "left" }} />
+              </div>
             </div>
           ) : (
             pub && <p className="tv-muted tv-closed">Requests are off right now.</p>

@@ -1,10 +1,20 @@
 // Where the files source's sound comes out. Two kinds behind one small interface:
-//   - the box's audio outputs (jack, HDMI, Bluetooth, AirPlay TVs), through SDK 0.13.0;
+//   - the box's audio outputs (jack, HDMI, Bluetooth, AirPlay TVs), through the SDK (0.13.0+);
 //   - the speaker page (/speaker), a browser on a PC or tablet wired to the sound system.
 
 import type { LibraryTrack } from "@music/shared";
 
-export type OutputEvent = { type: "ended"; trackId: string; message?: string } | { type: "error"; trackId: string; message: string };
+/**
+ * Why a song stopped (box 0.15.4, SDK 0.13.1); absent from older boxes and the speaker page.
+ *   finished: played to the end; stopped: staff or another app stopped it, or the box
+ *   restarted; replaced: something else started on that output; disconnected: the speaker
+ *   or TV went away; error: it couldn't play.
+ */
+export type EndReason = "finished" | "stopped" | "replaced" | "disconnected" | "error";
+
+export type OutputEvent =
+  | { type: "ended"; trackId: string; message?: string; reason?: EndReason }
+  | { type: "error"; trackId: string; message: string; reason?: EndReason };
 
 export interface OutputPosition {
   trackId: string;

@@ -93,6 +93,123 @@ describe("files on a box", () => {
   });
 });
 
+describe("files on a box 0.15.4 (endReason)", () => {
+  let t: TestApp;
+  let fake: FakeAudio;
+  let n = 0;
+  type Host = { problem: string; held: string | null; busyOutput: string | null; notice: string };
+  const host = async () => (await (await t.get("/api/admin/host", t.token)).json()) as Host;
+  before(async () => {
+    const bg = makeBarGames({ defaultName: "Music", coreUrl: "http://127.0.0.1:1", token: "box-token" });
+    let url = "";
+    fake = new FakeAudio(() => url, "box-token");
+    t = await startApp({ bg, audio: fake.api() });
+    url = t.url;
+    await t.call("PUT", "/settings", { source: "files" });
+  });
+  after(() => t.stop());
+
+  /** Two new songs from staff: the first plays, the second is handed (in the next slot). */
+  async function twoSongs(): Promise<[string, string]> {
+    const titles: string[] = [];
+    for (let i = 0; i < 2; i++) {
+      const tr = (await upload(t, `Band - Song ${++n}.mp3`, makeMp3({}, 2))).json.track!;
+      await t.call("POST", "/queue", { sourceId: `file:${tr.id}` });
+      titles.push(tr.title);
+    }
+    await t.music.player.tick();
+    await t.music.player.tick();
+    assert.equal(t.music.queue.playing()?.track.title, titles[0]);
+    assert.equal(t.music.queue.handed()[0]?.track.title, titles[1]);
+    return titles as [string, string];
+  }
+  /** Let the last song finish so the next test starts with nothing playing. */
+  async function drain() {
+    fake.endWith(fake.sessions.at(-1)!.id, "finished");
+    await t.music.player.tick();
+    assert.equal(t.music.queue.playing(), null);
+    assert.equal(t.music.queue.next(), null);
+  }
+
+  test("finished: the next song starts", async () => {
+    const [, second] = await twoSongs();
+    const before = fake.sessions.length;
+    fake.endWith(fake.sessions.at(-1)!.id, "finished");
+    await until(() => fake.sessions.length === before + 1, "next song");
+    await t.music.player.tick();
+    assert.equal(t.music.queue.playing()?.track.title, second);
+    assert.equal((await host()).held, null);
+    await drain();
+  });
+
+  test("error: the queue moves on and staff get a note", async () => {
+    const [first, second] = await twoSongs();
+    const before = fake.sessions.length;
+    fake.endWith(fake.sessions.at(-1)!.id, "error", "The app's audio file wasn't found.");
+    await until(() => fake.sessions.length === before + 1, "next song");
+    await t.music.player.tick();
+    assert.equal(t.music.queue.playing()?.track.title, second);
+    const h = await host();
+    assert.equal(h.held, null);
+    assert.equal(h.notice, `"${first}" couldn't play (The app's audio file wasn't found), so the queue moved on.`);
+    await drain();
+  });
+
+  for (const reason of ["stopped", "disconnected"] as const) {
+    test(`${reason}: the queue waits until staff carry on`, async () => {
+      const [, second] = await twoSongs();
+      const before = fake.sessions.length;
+      fake.endWith(fake.sessions.at(-1)!.id, reason, reason === "disconnected" ? "The speaker disconnected." : undefined);
+      await t.music.player.tick();
+      await t.music.player.tick();
+      assert.equal(fake.sessions.length, before, "nothing new started");
+      assert.equal(t.music.queue.playing(), null);
+      // The handed song went back to the queue, still first.
+      assert.equal(t.music.queue.handed().length, 0);
+      assert.equal(t.music.queue.next()?.track.title, second);
+      const h = await host();
+      assert.equal(h.held, reason);
+      assert.equal(h.busyOutput, null);
+      assert.match(h.problem, reason === "disconnected" ? /speaker went away \(The speaker disconnected\)/ : /stopped on/);
+      await t.call("POST", "/player/resume");
+      assert.equal(fake.sessions.length, before + 1);
+      assert.equal(t.music.queue.playing()?.track.title, second);
+      const after = await host();
+      assert.equal(after.held, null);
+      assert.equal(after.problem, "");
+      await drain();
+    });
+  }
+
+  test("replaced: the queue waits; staff can take the speaker over", async () => {
+    const [, second] = await twoSongs();
+    const before = fake.sessions.length;
+    fake.busy.add("box:0-0");
+    fake.endWith(fake.sessions.at(-1)!.id, "replaced", "Replaced by something else on Bar amp.");
+    await t.music.player.tick();
+    assert.equal(fake.sessions.length, before);
+    const h = await host();
+    assert.equal(h.held, "replaced");
+    assert.match(h.busyOutput ?? "", /Something else started on .*Replaced by something else on Bar amp/);
+    await t.call("POST", "/player/takeover");
+    await t.music.player.tick();
+    assert.equal(fake.sessions.length, before + 1);
+    assert.equal(t.music.queue.playing()?.track.title, second);
+    assert.equal((await host()).held, null);
+    fake.busy.delete("box:0-0");
+    await drain();
+  });
+
+  test("our own skip isn't mistaken for a stop", async () => {
+    const [, second] = await twoSongs();
+    await t.call("POST", "/player/skip");
+    await t.music.player.tick();
+    assert.equal(t.music.queue.playing()?.track.title, second);
+    assert.equal((await host()).held, null);
+    await drain();
+  });
+});
+
 describe("files with the speaker page (no box)", () => {
   let t: TestApp;
   let sock: Socket;

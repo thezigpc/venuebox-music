@@ -10,6 +10,12 @@ export interface SourceNowPlaying {
   playing: boolean;
 }
 
+export interface SourceHold {
+  reason: "stopped" | "replaced" | "disconnected";
+  /** For staff, in plain words. */
+  message: string;
+}
+
 export interface MusicSource {
   id: SourceId;
   label: string;
@@ -26,6 +32,12 @@ export interface MusicSource {
   get?(sourceId: string): Promise<Track | null>;
   /** Optional: called when playback changes on its own (a song ended), so the app reacts at once. */
   onChange?(cb: () => void): void;
+  /**
+   * Optional: the source is holding the queue (the speaker was stopped, taken by another
+   * app or went away). The app hands nothing over until staff carry on (`release`).
+   */
+  hold?(): SourceHold | null;
+  release?(): void;
   /** How often to ask nowPlaying(), playing and idle. */
   pollMs: { playing: number; idle: number };
   /** Hand the next song over this long before the current one ends. */

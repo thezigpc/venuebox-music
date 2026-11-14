@@ -14,7 +14,7 @@ import { log } from "@bargames/gamekit/server";
 import { normalize, type LibraryTrack, type SourceStatus, type Track } from "@music/shared";
 import type { Store } from "../store.js";
 import type { Output, OutputEvent } from "../outputs/types.js";
-import { SourceError, type MusicSource, type SourceNowPlaying } from "./types.js";
+import { SourceError, type MusicSource, type SourceHold, type SourceNowPlaying } from "./types.js";
 
 const EXT = new Map([
   [".mp3", "mp3"],
@@ -192,6 +192,10 @@ export class FilesSource implements MusicSource {
   /** Staff chose to take over a busy box output for the next start. */
   replaceOnce = false;
   problem = "";
+  /** Stopped, taken over or gone (box 0.15.4's endReason): nothing starts until staff carry on. */
+  private held: SourceHold | null = null;
+  /** A song that failed and was passed over, for staff (shown for a while). */
+  private note: { message: string; at: number } | null = null;
 
   constructor(
     private readonly library: Library,
@@ -220,7 +224,18 @@ export class FilesSource implements MusicSource {
     const cur = this.current;
     if (!cur || cur.output !== out || cur.lib.id !== e.trackId) return;
     this.current = null;
-    if (e.type === "error") {
+    if (e.reason === "stopped" || e.reason === "replaced" || e.reason === "disconnected") {
+      // Staff, another app or a lost speaker ended it: don't start the next one on our own.
+      this.next = null;
+      this.held = { reason: e.reason, message: holdMessage(e.reason, out.label, e.message) };
+      log.info("files", "queue held", { reason: e.reason });
+    } else if (e.type === "error" && e.reason) {
+      // Box 0.15.4+: this song failed; move on and tell staff.
+      log.warn("files", "playback failed, moving on", { reason: e.message });
+      this.note = { message: `"${cur.track.title}" couldn't play (${e.message.replace(/\.$/, "")}), so the queue moved on.`, at: Date.now() };
+      await this.startNext();
+    } else if (e.type === "error") {
+      // Older boxes and the speaker page: stop and show the problem.
       this.problem = e.message;
       this.next = null;
       log.warn("files", "playback failed", { reason: e.message });
@@ -242,6 +257,20 @@ export class FilesSource implements MusicSource {
     } catch (err) {
       this.problem = (err as Error).message;
     }
+  }
+
+  hold(): SourceHold | null {
+    return this.held;
+  }
+
+  /** Staff carry on after a hold. */
+  release(): void {
+    this.held = null;
+  }
+
+  /** The last passed-over failure, for two minutes. */
+  notice(now = Date.now()): string {
+    return this.note && now - this.note.at < 120_000 ? this.note.message : "";
   }
 
   private async startNow(track: Track): Promise<void> {
@@ -321,6 +350,7 @@ export class FilesSource implements MusicSource {
     const cur = this.current;
     this.current = null;
     this.next = null;
+    this.held = null;
     if (cur) await cur.output.stop().catch(() => undefined);
     this.changed();
   }
@@ -328,4 +358,11 @@ export class FilesSource implements MusicSource {
   onChange(cb: () => void): void {
     this.listeners.push(cb);
   }
+}
+
+function holdMessage(reason: SourceHold["reason"], where: string, why?: string): string {
+  const detail = why ? ` (${why.replace(/\.$/, "")})` : "";
+  if (reason === "disconnected") return `The speaker went away${detail}. The queue is paused until you carry on.`;
+  if (reason === "replaced") return `Something else started on ${where}${detail}. The queue is waiting: carry on, or take the speaker over.`;
+  return `The music was stopped on ${where}${detail}. The queue is waiting until you carry on.`;
 }
