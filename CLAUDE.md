@@ -111,7 +111,11 @@ names in the repo.
   nothing played on real speakers or TVs.
 - The box forwards an app's room-less events to integrations (Home Assistant) like a
   game's. SDK 0.13.1's `validate` no longer warns about it.
-- 0.1.1 (SDK 0.13.1, kit 0.7.3, `endReason`) published 2026-11-14; the box session installs it.
+- 0.1.1 (SDK 0.13.1, kit 0.7.3, `endReason`) published and installed on the dev box
+  2026-11-14. The box is still 0.15.3 (no `endReason` yet; the state fallback runs) until
+  the user approves 0.15.4. Queued for the next SDK/kit patch: `AudioEndReason` exported
+  from `/server`, mock-box controls to end a session as replaced/disconnected/error, the
+  `mock-box --help` bug, a `JoinAddress` align prop (then drop our style override).
 
 ## Not yet verified against the real thing
 - Real Spotify (the user's account and developer app): the wizard, PKCE sign-in, devices,
