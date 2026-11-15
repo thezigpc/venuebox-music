@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 (2026-11-15)
+
+- SDK 0.14.0 and GameKit 0.8.0. No changes to the app (the new hosting commands are for
+  games with a host phone).
+
 ## 0.1.2 (2026-11-14)
 
 - SDK 0.13.2 and GameKit 0.7.4 (`AudioEndReason` from the SDK; `JoinAddress align="start"`).

@@ -19,7 +19,7 @@ the QR code. Runs standalone too. Repo: https://github.com/thezigpc/venuebox-mus
   and pastes its client id; PKCE, no secret. The setup screen shows the personal-use notice
   and stores when it was confirmed (`spotify.consentAt`). Never call the app "licensed" or
   "approved". README has the Licensing section.
-- **Speakers belong to the box.** Files play through `bg.audio` (SDK 0.13.2, box 0.15.0+)
+- **Speakers belong to the box.** Files play through `bg.audio` (SDK 0.14.0, box 0.15.0+)
   or the speaker page. Never pair Bluetooth, open sound devices, ask for host access, or use
   librespot or any unofficial Spotify player.
 - **Don't play sound on the user's real TVs or speakers without asking them** (the box
@@ -84,21 +84,28 @@ Our own skip/stop forgets the session first, so it never looks like a hold.
   address.
 
 ## Platform
-- `bargames.json`: id `music`, port 3009, `kind: app`, SDK 0.13.2 level 2 (events, no
+- `bargames.json`: id `music`, port 3009, `kind: app`, SDK 0.14.0 level 2 (events, no
   commands), routes player `/`, table `/tv`, host `/host`, admin `/admin`, `basePath`,
   `audio.play`, `network.internet`, 384m.
-- Vendored: `vendor/bargames-sdk-0.13.2.tgz` (GameBroker/integration),
-  `vendor/bargames-gamekit-0.7.4.tgz` (GameKit/dist-pack, or the kit's GitHub release).
+- Vendored: `vendor/bargames-sdk-0.14.0.tgz` (GameBroker/integration),
+  `vendor/bargames-gamekit-0.8.0.tgz` (GameKit/dist-pack, or the kit's GitHub release).
   When changing them: update both package.json files and run `npm install` (lockfile).
 - The TV prints the guest address under the QR with kit `JoinAddress align="start"` (width
   set by `.tv-qr`). Check long ones with `mock-box --public-url https://<long>/music`.
-- **Mock box on this PC:** other sessions run mock boxes too (7080/7199 is often taken; SDK
-  0.13.2 says so clearly) and
-  something kills `node server/dist/index.js` started by a relative path. Use
-  `--port 7381 --core-port 7399` (and `MSYS_NO_PATHCONV=1` in Git Bash for `--base`), set
-  `BG_BASE_PATH=/music`, and start the app with the absolute path.
-  `server/test/tools/mock-box-endreason.ts` drives all five end reasons (mock control
-  `POST /__bargames/dev/audio/end?reason=…`).
+- **Mock box on this PC:** other sessions run mock boxes and servers side by side, and no
+  port is reserved for us (7080/7199 and 7381/7399 have both been taken by others).
+  1. **Before starting**, check the ports are free (`netstat -ano | grep LISTEN`) and pick
+     others if not; a busy port means your mock box didn't start and `check` would test
+     someone else's (it names the venue's app: make sure it says "Music Requests").
+  2. Start: `MSYS_NO_PATHCONV=1 npx bargames mock-box . --base /music --port <P> --core-port <C>`;
+     the app with `BG_BASE_PATH=/music BG_CORE_URL=http://127.0.0.1:<C>` and the absolute
+     path `node c:/CodeProjects/VenueboxMusic/server/dist/index.js` (something has killed
+     relative-path ones).
+  3. **Stop only our own processes, by the PID listening on the port we started** (and its
+     npx parent if it's our mock box). Never by a command-line pattern: on 2026-11-15 a
+     `--port 7381` match stopped the Matter session's mock box.
+  `GW=http://localhost:<P> npx tsx server/test/tools/mock-box-endreason.ts` drives all five
+  end reasons (mock control `POST /__bargames/dev/audio/end?reason=…`).
 - Don't edit `C:\CodeProjects\GameBroker` or other modules; platform needs go to the
   GameBroker session (ListAgents, name starts with "GameBroker") as "SDK requests".
 
@@ -113,8 +120,10 @@ names in the repo.
   nothing played on real speakers or TVs.
 - The box forwards an app's room-less events to integrations (Home Assistant) like a
   game's. SDK 0.13.1's `validate` no longer warns about it.
-- 0.1.2 (SDK 0.13.2, kit 0.7.4) published and installed on the dev box 2026-11-14 (nothing played). The box
-  is on 0.16.0, which reports `endReason` for real.
+- 0.1.2 (SDK 0.13.2, kit 0.7.4) installed on the dev box 2026-11-14 (nothing played). The
+  box is on 0.16.0, which reports `endReason` for real.
+- 0.1.3 (SDK 0.14.0, kit 0.8.0; no code changes: the hosting commands are for games with a
+  host phone) published 2026-11-15; the box session installs it.
 
 ## Not yet verified against the real thing
 - Real Spotify (the user's account and developer app): the wizard, PKCE sign-in, devices,

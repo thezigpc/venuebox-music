@@ -1,6 +1,6 @@
 # Bar Games integration: Music Requests (app)
 
-**Level 2, `kind: "app"`, SDK 0.13.2, game kit 0.7.4.** No rooms or commands; `x-music-*`
+**Level 2, `kind: "app"`, SDK 0.14.0, game kit 0.8.0.** No rooms or commands; `x-music-*`
 events; plays files on the box's speakers (`audio.play`).
 
 ## Manifest
@@ -22,9 +22,9 @@ digest. The events carry no room; the mock box accepts and prints them (see belo
 | `x-music-skipped` | `title`, `artist` |
 | `x-music-requests-open` / `x-music-requests-closed` | none |
 
-## `npx bargames check` (SDK 0.13.2 mock box, `--base /music`)
+## `npx bargames check` (SDK 0.14.0 mock box, `--base /music`)
 ```
-music@0.1.2 · level 2 · http://127.0.0.1:3009
+music@0.1.3 · level 2 · http://127.0.0.1:3009
 ✓ health /health → 200
 ✓ /__bargames/venue.json returns the box's branding ("Music Requests (mock)")
 ✓ /__bargames/theme.css served
@@ -44,7 +44,7 @@ Staff sign-in through the gateway (`/__bargames/staff?next=/host`) opens /host a
 without a password.
 
 ## endReason through the mock box (SDK 0.13.2, 2026-11-14)
-`server/test/tools/mock-box-endreason.ts` (mock box on `--port 7381 --core-port 7399`), six
+`server/test/tools/mock-box-endreason.ts` (mock box on free ports, see CLAUDE.md), six
 songs; the mock's `POST /__bargames/dev/audio/end?reason=…` ends the playing one:
 - `finished` (song 1 played to its end): song 2 followed.
 - `stopped`, `replaced`, `disconnected`: nothing started, the next song waited first in the
