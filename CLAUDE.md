@@ -123,7 +123,7 @@ names in the repo.
 - 0.1.2 (SDK 0.13.2, kit 0.7.4) installed on the dev box 2026-11-14 (nothing played). The
   box is on 0.16.0, which reports `endReason` for real.
 - 0.1.3 (SDK 0.14.0, kit 0.8.0; no code changes: the hosting commands are for games with a
-  host phone) published 2026-11-15; the box session installs it.
+  host phone) published and installed on the dev box 2026-11-15 (nothing played).
 
 ## Not yet verified against the real thing
 - Real Spotify (the user's account and developer app): the wizard, PKCE sign-in, devices,
