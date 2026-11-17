@@ -27,6 +27,8 @@ body {
   color: var(--text);
   font-family: var(--font);
   -webkit-text-size-adjust: 100%;
+  /* Kit 0.10's on-screen keyboard (box touch screens): room to scroll a field above it. */
+  padding-bottom: var(--bargames-keyboard, 0px);
 }
 button,
 input,
@@ -135,6 +137,11 @@ button {
   padding: 0.55rem 0.9rem;
   cursor: pointer;
   white-space: nowrap;
+}
+/* Kit 0.10.6's big-button list for a <select> (box touch screens) is a role="dialog":
+   long choices wrap there instead of running out of it. */
+[role="dialog"] button {
+  white-space: normal;
 }
 button:disabled {
   opacity: 0.45;

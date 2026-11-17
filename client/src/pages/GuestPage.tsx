@@ -2,7 +2,7 @@
 // device = one cookie. When a rule blocks a request, the guest sees which, in plain words.
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { BackToGames, basePath, useGameName, VenueAnnouncement } from "@bargames/gamekit/client";
+import { BackToGames, basePath, useGameName, useSharedScreen, VenueAnnouncement } from "@bargames/gamekit/client";
 import { DEFAULT_NAME, type GuestState, type PublicState, type Track } from "@music/shared";
 import { api, ApiError, duration } from "../api";
 import { Art } from "../components/StaffGate";
@@ -32,16 +32,21 @@ const STATUS_TEXT: Record<string, string> = {
 export function GuestPage() {
   const venue = useVenue();
   const name = useGameName(basePath(), DEFAULT_NAME);
+  // A screen many people use in turn (a request kiosk on the box's touch screen): don't
+  // remember the last person's name, and start fresh a few seconds after each request.
+  const shared = useSharedScreen();
   const [pub, setPub] = useState<PublicState | null>(null);
   const [me, setMe] = useState<GuestState | null>(null);
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Track[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [guestName, setGuestName] = useState(readName);
+  const [guestName, setGuestName] = useState(() => (shared ? "" : readName()));
   const [sent, setSent] = useState<Record<string, { ok: boolean; text: string }>>({});
   const [busy, setBusy] = useState("");
   const seq = useRef(0);
+  const nextPerson = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(nextPerson.current), []);
 
   const load = useCallback(async () => {
     const [p, m] = await Promise.allSettled([api.now(), api.me()]);
@@ -82,15 +87,26 @@ export function GuestPage() {
 
   const requestSong = async (t: Track) => {
     setBusy(t.sourceId);
-    try {
-      localStorage.setItem(NAME_KEY, guestName.trim());
-    } catch {
-      /* fine */
+    if (!shared) {
+      try {
+        localStorage.setItem(NAME_KEY, guestName.trim());
+      } catch {
+        /* fine */
+      }
     }
     try {
       const r = await api.request(t.sourceId, guestName);
       setSent((s) => ({ ...s, [t.sourceId]: { ok: true, text: r.status === "pending" ? "Requested! Staff will approve it." : "Added to the queue!" } }));
       void load();
+      if (shared) {
+        clearTimeout(nextPerson.current);
+        nextPerson.current = setTimeout(() => {
+          setQ("");
+          setResults(null);
+          setSent({});
+          setGuestName("");
+        }, 5000);
+      }
     } catch (err) {
       setSent((s) => ({ ...s, [t.sourceId]: { ok: false, text: err instanceof ApiError || err instanceof Error ? err.message : "That didn't work." } }));
     } finally {
@@ -139,10 +155,13 @@ export function GuestPage() {
               {searching ? "…" : "Search"}
             </button>
           </form>
-          <label className="name-row">
-            <span className="muted small">Your name (optional, shown with your song)</span>
-            <input value={guestName} onChange={(e) => setGuestName(e.target.value.slice(0, 24))} maxLength={24} autoComplete="nickname" />
-          </label>
+          {/* Its own form, so Enter (on any keyboard) just closes the field. */}
+          <form onSubmit={(e) => (e.preventDefault(), (document.activeElement as HTMLElement | null)?.blur())}>
+            <label className="name-row">
+              <span className="muted small">Your name (optional, shown with your song)</span>
+              <input value={guestName} onChange={(e) => setGuestName(e.target.value.slice(0, 24))} maxLength={24} autoComplete={shared ? "off" : "nickname"} enterKeyHint="done" />
+            </label>
+          </form>
           {searchError && <p className="error">{searchError}</p>}
           {results?.length === 0 && <p className="muted">No songs found. Try different words.</p>}
           <ul className="results">
@@ -174,7 +193,7 @@ export function GuestPage() {
         </section>
       )}
 
-      {(waiting.length > 0 || done.length > 0) && (
+      {!shared && (waiting.length > 0 || done.length > 0) && (
         <section className="card">
           <h2>Your requests</h2>
           <ul className="mine">

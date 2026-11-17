@@ -210,7 +210,7 @@ function Host({ signOut, recheck }: { signOut: () => void; recheck: () => void }
           <section className="card">
             <h2>Add a song</h2>
             <form className="search-row" onSubmit={search}>
-              <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Song or artist" />
+              <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Song or artist" aria-label="Song or artist" maxLength={100} enterKeyHint="search" />
               <button className="primary">Search</button>
             </form>
             <ul className="list">

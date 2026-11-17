@@ -1,6 +1,6 @@
 # Bar Games integration: Music Requests (app)
 
-**Level 2, `kind: "app"`, SDK 0.14.0, game kit 0.8.0.** No rooms or commands; `x-music-*`
+**Level 2, `kind: "app"`, SDK 0.16.0, game kit 0.10.6.** No rooms or commands; `x-music-*`
 events; plays files on the box's speakers (`audio.play`).
 
 ## Manifest
@@ -22,9 +22,9 @@ digest. The events carry no room; the mock box accepts and prints them (see belo
 | `x-music-skipped` | `title`, `artist` |
 | `x-music-requests-open` / `x-music-requests-closed` | none |
 
-## `npx bargames check` (SDK 0.14.0 mock box, `--base /music`)
+## `npx bargames check` (SDK 0.16.0 mock box, `--base /music`)
 ```
-music@0.1.3 · level 2 · http://127.0.0.1:3009
+music@0.1.4 · level 2 · http://127.0.0.1:3009
 ✓ health /health → 200
 ✓ /__bargames/venue.json returns the box's branding ("Music Requests (mock)")
 ✓ /__bargames/theme.css served
@@ -57,6 +57,19 @@ All passed ("ALL OK"). The unit tests in `server/test/files.test.ts` cover the s
 With `--public-url https://requests.the-longest-bar-name-in-town.example.net/music` the TV
 prints the address under the QR (kit `JoinAddress`), wrapped at "." and "/" inside the QR
 box at 1920x1080 and 1280x720.
+
+## On-screen keyboard (kit 0.10.6, 2026-11-17)
+`<OnScreenKeyboard />` is mounted once in `client/src/main.tsx` (every page). Checked with
+`server/test/tools/keyboard-drive.mjs`: headless Edge over the DevTools protocol, real taps on
+the keys, against the mock box at 1080p and 4K with `?bg_keyboard=1`:
+- guest search (typed, Enter searches), guest name (starts with a capital, Enter closes),
+  Request; staff search; the speaker dropdown (the kit's big-button list; choosing changes
+  the speaker); a rule number (number pad, ⌫, Enter saves); the app's name and a library
+  title (Enter saves);
+- `?bg_shared=1`: no remembered name, no "Your requests", fresh 5 s after a request;
+- `?bg_keyboard=0` and a phone (390x844, no flag): no keyboard, no sideways scrolling.
+All passed ("ALL OK"). Nothing on these pages is fixed to the bottom; `body` is padded by
+`--bargames-keyboard` so a field near the end can scroll above the keyboard.
 
 ## Server
 - `createBarGames({ gameId: "music" })`, middleware before `/api` and the SPA; status

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.4 (2026-11-17)
+
+- SDK 0.16.0 and GameKit 0.10.6: the kit's on-screen keyboard on the box's touch screens
+  (phones, tablets and PCs keep their own keyboards).
+- Every field people type in is a real input with a length limit inside a form, so Enter
+  works: song search (guests and staff), the guest's name, the Spotify client id and pasted
+  address (no automatic capital), the rules, the app's name, library titles and artists.
+  Rule numbers are text fields with a number pad; the server checks the ranges.
+- Dropdowns (the speaker) open the kit's big-button list on those screens; long choices wrap.
+- On a shared screen (a request kiosk) the guest page doesn't remember the last person's
+  name or show "Your requests", and starts fresh 5 seconds after each request.
+
 ## 0.1.3 (2026-11-15)
 
 - SDK 0.14.0 and GameKit 0.8.0. No changes to the app (the new hosting commands are for

@@ -19,7 +19,7 @@ the QR code. Runs standalone too. Repo: https://github.com/thezigpc/venuebox-mus
   and pastes its client id; PKCE, no secret. The setup screen shows the personal-use notice
   and stores when it was confirmed (`spotify.consentAt`). Never call the app "licensed" or
   "approved". README has the Licensing section.
-- **Speakers belong to the box.** Files play through `bg.audio` (SDK 0.14.0, box 0.15.0+)
+- **Speakers belong to the box.** Files play through `bg.audio` (SDK 0.16.0, box 0.15.0+)
   or the speaker page. Never pair Bluetooth, open sound devices, ask for host access, or use
   librespot or any unofficial Spotify player.
 - **Don't play sound on the user's real TVs or speakers without asking them** (the box
@@ -84,11 +84,11 @@ Our own skip/stop forgets the session first, so it never looks like a hold.
   address.
 
 ## Platform
-- `bargames.json`: id `music`, port 3009, `kind: app`, SDK 0.14.0 level 2 (events, no
+- `bargames.json`: id `music`, port 3009, `kind: app`, SDK 0.16.0 level 2 (events, no
   commands), routes player `/`, table `/tv`, host `/host`, admin `/admin`, `basePath`,
   `audio.play`, `network.internet`, 384m.
-- Vendored: `vendor/bargames-sdk-0.14.0.tgz` (GameBroker/integration),
-  `vendor/bargames-gamekit-0.8.0.tgz` (GameKit/dist-pack, or the kit's GitHub release).
+- Vendored: `vendor/bargames-sdk-0.16.0.tgz` (GameBroker/integration),
+  `vendor/bargames-gamekit-0.10.6.tgz` (`gh release download v<ver> --repo thezigpc/gamekit`).
   When changing them: update both package.json files and run `npm install` (lockfile).
 - The TV prints the guest address under the QR with kit `JoinAddress align="start"` (width
   set by `.tv-qr`). Check long ones with `mock-box --public-url https://<long>/music`.
@@ -106,6 +106,15 @@ Our own skip/stop forgets the session first, so it never looks like a hold.
      `--port 7381` match stopped the Matter session's mock box.
   `GW=http://localhost:<P> npx tsx server/test/tools/mock-box-endreason.ts` drives all five
   end reasons (mock control `POST /__bargames/dev/audio/end?reason=…`).
+- **On-screen keyboard (kit 0.10.6, box touch screens):** `<OnScreenKeyboard />` in
+  `main.tsx`. Typing fields: real inputs with `maxLength` inside a `<form onSubmit>` (Enter);
+  numbers `type="text" inputMode="numeric"` (server checks ranges); `autoCapitalize="none"`
+  on the client id and pasted address. Nothing fixed to the bottom; `body` has
+  `padding-bottom: var(--bargames-keyboard)`. Our global `button { white-space: nowrap }` is
+  undone for `[role="dialog"] button` (the kit's dropdown list). The guest page uses
+  `useSharedScreen()` (kiosk): no remembered name or "Your requests", reset 5 s after a
+  request. Test: `server/test/tools/keyboard-drive.mjs` (headless Edge over DevTools; it
+  closes Edge itself), see BARGAMES.md.
 - Don't edit `C:\CodeProjects\GameBroker` or other modules; platform needs go to the
   GameBroker session (ListAgents, name starts with "GameBroker") as "SDK requests".
 
@@ -124,6 +133,8 @@ names in the repo.
   box is on 0.16.0, which reports `endReason` for real.
 - 0.1.3 (SDK 0.14.0, kit 0.8.0; no code changes: the hosting commands are for games with a
   host phone) published and installed on the dev box 2026-11-15 (nothing played).
+- 0.1.4 (SDK 0.16.0, kit 0.10.6, on-screen keyboard) published 2026-11-17; the box is at
+  the venue and the box session installs it.
 
 ## Not yet verified against the real thing
 - Real Spotify (the user's account and developer app): the wizard, PKCE sign-in, devices,
